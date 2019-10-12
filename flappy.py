@@ -1,14 +1,15 @@
 from itertools import cycle
 import random
 import sys
-
 import pygame
 from pygame.locals import *
 
-
+loop = 0
+jump = True
 FPS = 30
 SCREENWIDTH  = 288
 SCREENHEIGHT = 512
+ai = None
 PIPEGAPSIZE  = 100 # gap between upper and lower part of pipe
 BASEY        = SCREENHEIGHT * 0.79
 # image, sound and hitmask  dicts
@@ -55,7 +56,9 @@ except NameError:
     xrange = range
 
 
-def main():
+def main(nai):
+    global ai
+    ai = nai
     global SCREEN, FPSCLOCK
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -131,7 +134,10 @@ def main():
 
         movementInfo = showWelcomeAnimation()
         crashInfo = mainGame(movementInfo)
+        break
         showGameOverScreen(crashInfo)
+
+    return loop
 
 
 def showWelcomeAnimation():
@@ -160,14 +166,22 @@ def showWelcomeAnimation():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+            if(event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP)):
                 # make first flap sound and return values for mainGame
-                SOUNDS['wing'].play()
+                #SOUNDS['wing'].play()
                 return {
                     'playery': playery + playerShmVals['val'],
                     'basex': basex,
                     'playerIndexGen': playerIndexGen,
                 }
+
+        # make first flap sound and return values for mainGame
+        #SOUNDS['wing'].play()
+        return {
+            'playery': playery + playerShmVals['val'],
+            'basex': basex,
+            'playerIndexGen': playerIndexGen,
+        }
 
         # adjust playery, playerIndex, basex
         if (loopIter + 1) % 5 == 0:
@@ -188,6 +202,8 @@ def showWelcomeAnimation():
 
 
 def mainGame(movementInfo):
+    global loop
+    loop = 0
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
     playerx, playery = int(SCREENWIDTH * 0.2), movementInfo['playery']
@@ -226,15 +242,22 @@ def mainGame(movementInfo):
 
 
     while True:
+        loop+=1
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+                #sys.exit()
+                break
+            if (event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP)):
                 if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc
                     playerFlapped = True
-                    SOUNDS['wing'].play()
+                    #SOUNDS['wing'].play()    
+        
+        if jump and playery > -2 * IMAGES['player'][0].get_height():
+            playerVelY = playerFlapAcc
+            playerFlapped = True
+            #SOUNDS['wing'].play()
 
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
@@ -250,14 +273,14 @@ def mainGame(movementInfo):
                 'playerVelY': playerVelY,
                 'playerRot': playerRot
             }
-
+        
         # check for score
         playerMidPos = playerx + IMAGES['player'][0].get_width() / 2
         for pipe in upperPipes:
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
-                SOUNDS['point'].play()
+                #SOUNDS['point'].play()
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:
@@ -322,6 +345,7 @@ def mainGame(movementInfo):
 
 def showGameOverScreen(crashInfo):
     """crashes the player down ans shows gameover image"""
+    return 0
     score = crashInfo['score']
     playerx = SCREENWIDTH * 0.2
     playery = crashInfo['y']
@@ -336,7 +360,7 @@ def showGameOverScreen(crashInfo):
     upperPipes, lowerPipes = crashInfo['upperPipes'], crashInfo['lowerPipes']
 
     # play hit and die sounds
-    SOUNDS['hit'].play()
+    #SOUNDS['hit'].play()
     if not crashInfo['groundCrash']:
         SOUNDS['die'].play()
 
@@ -345,7 +369,7 @@ def showGameOverScreen(crashInfo):
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+            if jump or (event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP)):
                 if playery + playerHeight >= BASEY - 1:
                     return
 
@@ -424,11 +448,15 @@ def showScore(score):
 
 
 def checkCrash(player, upperPipes, lowerPipes):
+    global ai
     """returns True if player collders with base or pipes."""
     pi = player['index']
     player['w'] = IMAGES['player'][0].get_width()
     player['h'] = IMAGES['player'][0].get_height()
-
+    global jump
+    i = 0
+    while upperPipes[i]["x"] <= player["x"]:i+=1 
+    jump = ai.getJump(upperPipes[i]["x"],upperPipes[i]["y"],lowerPipes[i]["x"],lowerPipes[i]["y"],player["y"])
     # if player crashes into ground
     if player['y'] + player['h'] >= BASEY - 1:
         return [True, True]
@@ -453,7 +481,7 @@ def checkCrash(player, upperPipes, lowerPipes):
             uCollide = pixelCollision(playerRect, uPipeRect, pHitMask, uHitmask)
             lCollide = pixelCollision(playerRect, lPipeRect, pHitMask, lHitmask)
 
-            if uCollide or lCollide:
+            if uCollide or lCollide or player["y"]<0:
                 return [True, False]
 
     return [False, False]
@@ -483,5 +511,5 @@ def getHitmask(image):
             mask[x].append(bool(image.get_at((x,y))[3]))
     return mask
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

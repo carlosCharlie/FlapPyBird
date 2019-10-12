@@ -7,6 +7,7 @@ verify_ssl = true
 
 [packages]
 pygame = "*"
+tensorflow = "==1.14"
 
 [requires]
 python_version = "3.7"
