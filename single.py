@@ -7,7 +7,8 @@ class Single:
  
         if model==None:
             self.model = keras.models.Sequential([
-                keras.layers.Dense(5,input_shape=(5,)),
+                keras.layers.Dense(3,input_shape=(3,)),
+                keras.layers.Dense(3),
                 keras.layers.Dense(2),
                 keras.layers.Dense(1,activation="sigmoid")
             ])
@@ -19,8 +20,8 @@ class Single:
               metrics=['accuracy'])
 
     
-    def getJump(self,upx,upy,downx,downy,posy):
-        return self.model.predict(np.array([np.array([upx,upy,downx,downy,posy])]))[0][0]>0.5
+    def getJump(self,downx,downy,posy):
+        return self.model.predict(np.array([np.array([downx,downy,posy])]))[0][0]>0.5
 
     def procreate(self):
         child = Single()
@@ -30,10 +31,10 @@ class Single:
 
                     if type(weight) is np.ndarray:
                         for i_w2 in range(0,weight.size):
-                            if random.random()<0.98:
+                            if random.random()<0.97:
                                     weight[i_w2] = self.model.layers[i_l].get_weights()[i_n][i_w][i_w2]
 
-                    elif random.random()<0.98:
+                    elif random.random()<0.97:
                                 weight = self.model.layers[i_l].get_weights()[i_n][i_w]
 
         return child

@@ -456,7 +456,14 @@ def checkCrash(player, upperPipes, lowerPipes):
     global jump
     i = 0
     while upperPipes[i]["x"] <= player["x"]:i+=1 
-    jump = ai.getJump(upperPipes[i]["x"],upperPipes[i]["y"],lowerPipes[i]["x"],lowerPipes[i]["y"],player["y"])
+
+    playerpos = player["y"]+IMAGES['player'][0].get_height()/2
+
+    pygame.draw.line(SCREEN, (235, 64, 52), [0, playerpos], [SCREENWIDTH,playerpos], 3)
+    pygame.draw.circle(SCREEN, (235, 64, 52), [int(lowerPipes[i]["x"]),int(lowerPipes[i]["y"])], 10)
+    pygame.display.update()
+
+    jump = ai.getJump(lowerPipes[i]["x"],lowerPipes[i]["y"],playerpos)
     # if player crashes into ground
     if player['y'] + player['h'] >= BASEY - 1:
         return [True, True]
