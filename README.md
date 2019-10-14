@@ -22,10 +22,10 @@ $ pipenv run python test.py
 ```
 <h3>Project structure</h3>
 <ol>
-  <li>flappy.py: Original game with small changes.</li>
-  <li>single.py: Represents each individual in the population, contains a neural network made with Keras</li>
-  <li>train.py: Makes the population evolve, optimizing the neural networks, then saves the best.</li>
-  <li>test.py: Load the best neuronal network configuration found after running train.py</li>
+  <li><strong>flappy.py</strong>: Original game with small changes.</li>
+  <li><strong>single.py</strong>: Represents each individual in the population, contains a neural network made with Keras</li>
+  <li><strong>train.py</strong>: Makes the population evolve, optimizing the neural networks, then saves the best.</li>
+  <li><strong>test.py</strong>: Load the best neuronal network configuration found after running train.py</li>
 </ol>
 
 <p align="center"><img align="center" src="media/demo.gif"></p>
